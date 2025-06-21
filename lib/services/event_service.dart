@@ -17,13 +17,10 @@ class EventService {
     });
   }
 
-  Future<List<Event>> getEventsForMonth(DateTime month) async {
-    final start = DateTime(month.year, month.month, 1);
-    final end = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
-
+  Future<List<Event>> getEventsBetween(DateTime start, DateTime end) async {
     return await _isar.events
         .filter()
-        .startBetween(start, end)
+        .startBetween(start, end, includeLower: true, includeUpper: true)
         .findAll();
   }
 
