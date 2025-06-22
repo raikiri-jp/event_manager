@@ -71,10 +71,17 @@ class _CustomCalendarState extends State<CustomCalendar> {
     return firstDay.subtract(Duration(days: firstDay.weekday % 7));
   }
 
+  DateTime _lastDayOfCalendar(DateTime month) {
+    final lastDay = DateTime(widget.focusedMonth.year, widget.focusedMonth.month + 1, 0);
+    return lastDay.add(Duration(days: 7 - lastDay.weekday % 7));
+  }
+
   @override
   Widget build(BuildContext context) {
     final start = _firstDayOfCalendar(widget.focusedMonth);
-    final days = List.generate(42, (i) => start.add(Duration(days: i)));
+    final end = _lastDayOfCalendar(widget.focusedMonth);
+    final daysLen = end.difference(start);
+    final days = List.generate(daysLen.inDays, (i) => start.add(Duration(days: i)));
 
     return Column(
       children: [
