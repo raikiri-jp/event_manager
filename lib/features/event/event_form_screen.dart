@@ -43,8 +43,15 @@ class _EventFormScreenState extends State<EventFormScreen> {
         // ignore: use_build_context_synchronously
         final container = ProviderScope.containerOf(context);
         final current = container.read(focusedMonthProvider);
-        container.read(focusedMonthProvider.notifier).state = 
-          DateTime(current.year, current.month, 1, 0, 0, 0, current.microsecond + 1);
+        container.read(focusedMonthProvider.notifier).state = DateTime(
+          current.year,
+          current.month,
+          1,
+          0,
+          0,
+          0,
+          current.microsecond + 1,
+        );
 
         // ignore: use_build_context_synchronously
         Navigator.pop(context);
@@ -52,9 +59,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     }
   }
 
-  Future<void> _pickDateTime({
-    required bool isStart,
-  }) async {
+  Future<void> _pickDateTime({required bool isStart}) async {
     final initial = isStart ? _start : _end;
     final pickedDate = await showDatePicker(
       context: context,
@@ -145,13 +150,14 @@ class _EventFormScreenState extends State<EventFormScreen> {
               if (_adjustBusinessDay)
                 DropdownButtonFormField<BusinessDayRule>(
                   value: _selectedRule,
-                  decoration:
-                      const InputDecoration(labelText: '調整方法（営業日）'),
+                  decoration: const InputDecoration(labelText: '調整方法（営業日）'),
                   items: BusinessDayRule.values
-                      .map((rule) => DropdownMenuItem(
-                            value: rule,
-                            child: Text(_labelForRule(rule)),
-                          ))
+                      .map(
+                        (rule) => DropdownMenuItem(
+                          value: rule,
+                          child: Text(_labelForRule(rule)),
+                        ),
+                      )
                       .toList(),
                   onChanged: (value) {
                     if (value != null) {
@@ -162,10 +168,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
                   },
                 ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _save,
-                child: const Text('保存'),
-              ),
+              ElevatedButton(onPressed: _save, child: const Text('保存')),
             ],
           ),
         ),

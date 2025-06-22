@@ -5,11 +5,7 @@ class CalendarCell extends StatelessWidget {
   final DateTime date;
   final List<Event> events;
 
-  const CalendarCell({
-    super.key,
-    required this.date,
-    required this.events,
-  });
+  const CalendarCell({super.key, required this.date, required this.events});
 
   @override
   Widget build(BuildContext context) {
@@ -37,12 +33,16 @@ class CalendarCell extends StatelessWidget {
                 color: _getDateTextColor(date),
               ),
             ),
-            ...events.take(2).map((event) => Text(
-                  event.title,
-                  style: const TextStyle(fontSize: 9),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                )),
+            ...events
+                .take(2)
+                .map(
+                  (event) => Text(
+                    event.title,
+                    style: const TextStyle(fontSize: 9),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
             if (events.length > 2)
               Text(
                 '+${events.length - 2}件',

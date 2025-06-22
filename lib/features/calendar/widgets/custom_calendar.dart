@@ -6,10 +6,7 @@ import 'calendar_cell.dart';
 class CustomCalendar extends StatefulWidget {
   final DateTime focusedMonth;
 
-  const CustomCalendar({
-    super.key,
-    required this.focusedMonth,
-  });
+  const CustomCalendar({super.key, required this.focusedMonth});
 
   @override
   State<CustomCalendar> createState() => _CustomCalendarState();
@@ -34,15 +31,30 @@ class _CustomCalendarState extends State<CustomCalendar> {
   }
 
   void _loadEvents() async {
-    final start = DateTime(widget.focusedMonth.year, widget.focusedMonth.month, 1);
-    final end = DateTime(widget.focusedMonth.year, widget.focusedMonth.month + 1, 0, 23, 59, 59);
+    final start = DateTime(
+      widget.focusedMonth.year,
+      widget.focusedMonth.month,
+      1,
+    );
+    final end = DateTime(
+      widget.focusedMonth.year,
+      widget.focusedMonth.month + 1,
+      0,
+      23,
+      59,
+      59,
+    );
 
     final events = await _eventService.getEventsBetween(start, end);
 
     // 日付ごとにまとめる
     final Map<DateTime, List<Event>> map = {};
     for (var event in events) {
-      final date = DateTime(event.start.year, event.start.month, event.start.day);
+      final date = DateTime(
+        event.start.year,
+        event.start.month,
+        event.start.day,
+      );
       if (!map.containsKey(date)) {
         map[date] = [];
       }
@@ -76,7 +88,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
             ),
             itemBuilder: (context, index) {
               final date = days[index];
-              final events = _eventsMap[DateTime(date.year, date.month, date.day)] ?? [];
+              final events =
+                  _eventsMap[DateTime(date.year, date.month, date.day)] ?? [];
               return CalendarCell(date: date, events: events);
             },
           ),
@@ -90,14 +103,16 @@ class _CustomCalendarState extends State<CustomCalendar> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: days
-          .map((d) => Expanded(
-                child: Center(
-                  child: Text(
-                    d,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+          .map(
+            (d) => Expanded(
+              child: Center(
+                child: Text(
+                  d,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-              ))
+              ),
+            ),
+          )
           .toList(),
     );
   }

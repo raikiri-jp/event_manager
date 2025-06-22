@@ -1,5 +1,1 @@
-enum BusinessDayRule {
-  none,
-  moveToPrevious,
-  moveToNext,
-}
+enum BusinessDayRule { none, moveToPrevious, moveToNext }

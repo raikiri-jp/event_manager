@@ -12,9 +12,9 @@ class IsarService {
 
   Future<void> init() async {
     final dir = await getApplicationDocumentsDirectory();
-    isar = await Isar.open(
-      [EventSchema, EventInstanceSchema],
-      directory: dir.path,
-    );
+    isar = await Isar.open([
+      EventSchema,
+      EventInstanceSchema,
+    ], directory: dir.path);
   }
 }

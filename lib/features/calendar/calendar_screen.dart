@@ -40,7 +40,10 @@ class _MonthHeader extends ConsumerWidget {
         IconButton(
           icon: const Icon(Icons.chevron_left),
           onPressed: () {
-            notifier.state = DateTime(focusedMonth.year, focusedMonth.month - 1);
+            notifier.state = DateTime(
+              focusedMonth.year,
+              focusedMonth.month - 1,
+            );
           },
         ),
         Text(
@@ -50,7 +53,10 @@ class _MonthHeader extends ConsumerWidget {
         IconButton(
           icon: const Icon(Icons.chevron_right),
           onPressed: () {
-            notifier.state = DateTime(focusedMonth.year, focusedMonth.month + 1);
+            notifier.state = DateTime(
+              focusedMonth.year,
+              focusedMonth.month + 1,
+            );
           },
         ),
       ],
