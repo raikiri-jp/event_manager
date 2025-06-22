@@ -39,11 +39,14 @@ class _EventFormScreenState extends State<EventFormScreen> {
       await _eventService.addEvent(event);
 
       if (context.mounted) {
-        // TODO カレンダーの再描画を促す
+        // カレンダーの再描画を促す
+        // ignore: use_build_context_synchronously
         final container = ProviderScope.containerOf(context);
         final current = container.read(focusedMonthProvider);
-        container.read(focusedMonthProvider.notifier).state = current;
+        container.read(focusedMonthProvider.notifier).state = 
+          DateTime(current.year, current.month, 1, 0, 0, 0, current.microsecond + 1);
 
+        // ignore: use_build_context_synchronously
         Navigator.pop(context);
       }
     }
