@@ -1,4 +1,6 @@
+import 'package:event_manager/providers/calendar_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/event.dart';
 import '../../models/enums.dart';
@@ -37,6 +39,11 @@ class _EventFormScreenState extends State<EventFormScreen> {
       await _eventService.addEvent(event);
 
       if (context.mounted) {
+        // TODO カレンダーの再描画を促す
+        final container = ProviderScope.containerOf(context);
+        final current = container.read(focusedMonthProvider);
+        container.read(focusedMonthProvider.notifier).state = current;
+
         Navigator.pop(context);
       }
     }
