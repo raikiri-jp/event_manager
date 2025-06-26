@@ -17,35 +17,45 @@ const EventInstanceSchema = CollectionSchema(
   name: r'EventInstance',
   id: -4945077353569174473,
   properties: {
-    r'date': PropertySchema(
-      id: 0,
-      name: r'date',
-      type: IsarType.dateTime,
-    ),
-    r'eventId': PropertySchema(
-      id: 1,
-      name: r'eventId',
-      type: IsarType.long,
-    ),
     r'isDeleted': PropertySchema(
-      id: 2,
+      id: 0,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
-    r'overrideEnd': PropertySchema(
+    r'isOverridden': PropertySchema(
+      id: 1,
+      name: r'isOverridden',
+      type: IsarType.bool,
+    ),
+    r'occurrenceDate': PropertySchema(
+      id: 2,
+      name: r'occurrenceDate',
+      type: IsarType.dateTime,
+    ),
+    r'overriddenDescription': PropertySchema(
       id: 3,
-      name: r'overrideEnd',
-      type: IsarType.dateTime,
-    ),
-    r'overrideStart': PropertySchema(
-      id: 4,
-      name: r'overrideStart',
-      type: IsarType.dateTime,
-    ),
-    r'overrideTitle': PropertySchema(
-      id: 5,
-      name: r'overrideTitle',
+      name: r'overriddenDescription',
       type: IsarType.string,
+    ),
+    r'overriddenEnd': PropertySchema(
+      id: 4,
+      name: r'overriddenEnd',
+      type: IsarType.dateTime,
+    ),
+    r'overriddenStart': PropertySchema(
+      id: 5,
+      name: r'overriddenStart',
+      type: IsarType.dateTime,
+    ),
+    r'overriddenTitle': PropertySchema(
+      id: 6,
+      name: r'overriddenTitle',
+      type: IsarType.string,
+    ),
+    r'parentEventId': PropertySchema(
+      id: 7,
+      name: r'parentEventId',
+      type: IsarType.long,
     )
   },
   estimateSize: _eventInstanceEstimateSize,
@@ -69,7 +79,13 @@ int _eventInstanceEstimateSize(
 ) {
   var bytesCount = offsets.last;
   {
-    final value = object.overrideTitle;
+    final value = object.overriddenDescription;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.overriddenTitle;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
     }
@@ -83,12 +99,14 @@ void _eventInstanceSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.date);
-  writer.writeLong(offsets[1], object.eventId);
-  writer.writeBool(offsets[2], object.isDeleted);
-  writer.writeDateTime(offsets[3], object.overrideEnd);
-  writer.writeDateTime(offsets[4], object.overrideStart);
-  writer.writeString(offsets[5], object.overrideTitle);
+  writer.writeBool(offsets[0], object.isDeleted);
+  writer.writeBool(offsets[1], object.isOverridden);
+  writer.writeDateTime(offsets[2], object.occurrenceDate);
+  writer.writeString(offsets[3], object.overriddenDescription);
+  writer.writeDateTime(offsets[4], object.overriddenEnd);
+  writer.writeDateTime(offsets[5], object.overriddenStart);
+  writer.writeString(offsets[6], object.overriddenTitle);
+  writer.writeLong(offsets[7], object.parentEventId);
 }
 
 EventInstance _eventInstanceDeserialize(
@@ -98,13 +116,15 @@ EventInstance _eventInstanceDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = EventInstance();
-  object.date = reader.readDateTime(offsets[0]);
-  object.eventId = reader.readLong(offsets[1]);
   object.id = id;
-  object.isDeleted = reader.readBool(offsets[2]);
-  object.overrideEnd = reader.readDateTimeOrNull(offsets[3]);
-  object.overrideStart = reader.readDateTimeOrNull(offsets[4]);
-  object.overrideTitle = reader.readStringOrNull(offsets[5]);
+  object.isDeleted = reader.readBool(offsets[0]);
+  object.isOverridden = reader.readBool(offsets[1]);
+  object.occurrenceDate = reader.readDateTime(offsets[2]);
+  object.overriddenDescription = reader.readStringOrNull(offsets[3]);
+  object.overriddenEnd = reader.readDateTimeOrNull(offsets[4]);
+  object.overriddenStart = reader.readDateTimeOrNull(offsets[5]);
+  object.overriddenTitle = reader.readStringOrNull(offsets[6]);
+  object.parentEventId = reader.readLong(offsets[7]);
   return object;
 }
 
@@ -116,17 +136,21 @@ P _eventInstanceDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTime(offset)) as P;
-    case 1:
-      return (reader.readLong(offset)) as P;
-    case 2:
       return (reader.readBool(offset)) as P;
+    case 1:
+      return (reader.readBool(offset)) as P;
+    case 2:
+      return (reader.readDateTime(offset)) as P;
     case 3:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 5:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 6:
       return (reader.readStringOrNull(offset)) as P;
+    case 7:
+      return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -228,117 +252,6 @@ extension EventInstanceQueryWhere
 
 extension EventInstanceQueryFilter
     on QueryBuilder<EventInstance, EventInstance, QFilterCondition> {
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition> dateEqualTo(
-      DateTime value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'date',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      dateGreaterThan(
-    DateTime value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'date',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      dateLessThan(
-    DateTime value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'date',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition> dateBetween(
-    DateTime lower,
-    DateTime upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'date',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      eventIdEqualTo(int value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'eventId',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      eventIdGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'eventId',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      eventIdLessThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'eventId',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      eventIdBetween(
-    int lower,
-    int upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'eventId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition> idEqualTo(
       Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -404,71 +317,63 @@ extension EventInstanceQueryFilter
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideEndIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'overrideEnd',
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideEndIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'overrideEnd',
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideEndEqualTo(DateTime? value) {
+      isOverriddenEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'overrideEnd',
+        property: r'isOverridden',
         value: value,
       ));
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideEndGreaterThan(
-    DateTime? value, {
+      occurrenceDateEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'occurrenceDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      occurrenceDateGreaterThan(
+    DateTime value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'overrideEnd',
+        property: r'occurrenceDate',
         value: value,
       ));
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideEndLessThan(
-    DateTime? value, {
+      occurrenceDateLessThan(
+    DateTime value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'overrideEnd',
+        property: r'occurrenceDate',
         value: value,
       ));
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideEndBetween(
-    DateTime? lower,
-    DateTime? upper, {
+      occurrenceDateBetween(
+    DateTime lower,
+    DateTime upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'overrideEnd',
+        property: r'occurrenceDate',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -478,105 +383,31 @@ extension EventInstanceQueryFilter
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideStartIsNull() {
+      overriddenDescriptionIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'overrideStart',
+        property: r'overriddenDescription',
       ));
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideStartIsNotNull() {
+      overriddenDescriptionIsNotNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'overrideStart',
+        property: r'overriddenDescription',
       ));
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideStartEqualTo(DateTime? value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'overrideStart',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideStartGreaterThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'overrideStart',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideStartLessThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'overrideStart',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideStartBetween(
-    DateTime? lower,
-    DateTime? upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'overrideStart',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'overrideTitle',
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'overrideTitle',
-      ));
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleEqualTo(
+      overriddenDescriptionEqualTo(
     String? value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'overrideTitle',
+        property: r'overriddenDescription',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -584,7 +415,7 @@ extension EventInstanceQueryFilter
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleGreaterThan(
+      overriddenDescriptionGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
@@ -592,7 +423,7 @@ extension EventInstanceQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'overrideTitle',
+        property: r'overriddenDescription',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -600,7 +431,7 @@ extension EventInstanceQueryFilter
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleLessThan(
+      overriddenDescriptionLessThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
@@ -608,7 +439,7 @@ extension EventInstanceQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'overrideTitle',
+        property: r'overriddenDescription',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -616,7 +447,7 @@ extension EventInstanceQueryFilter
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleBetween(
+      overriddenDescriptionBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -625,7 +456,7 @@ extension EventInstanceQueryFilter
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'overrideTitle',
+        property: r'overriddenDescription',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -636,13 +467,13 @@ extension EventInstanceQueryFilter
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleStartsWith(
+      overriddenDescriptionStartsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'overrideTitle',
+        property: r'overriddenDescription',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -650,13 +481,13 @@ extension EventInstanceQueryFilter
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleEndsWith(
+      overriddenDescriptionEndsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'overrideTitle',
+        property: r'overriddenDescription',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -664,10 +495,10 @@ extension EventInstanceQueryFilter
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleContains(String value, {bool caseSensitive = true}) {
+      overriddenDescriptionContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
-        property: r'overrideTitle',
+        property: r'overriddenDescription',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -675,10 +506,11 @@ extension EventInstanceQueryFilter
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleMatches(String pattern, {bool caseSensitive = true}) {
+      overriddenDescriptionMatches(String pattern,
+          {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
-        property: r'overrideTitle',
+        property: r'overriddenDescription',
         wildcard: pattern,
         caseSensitive: caseSensitive,
       ));
@@ -686,21 +518,379 @@ extension EventInstanceQueryFilter
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleIsEmpty() {
+      overriddenDescriptionIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'overrideTitle',
+        property: r'overriddenDescription',
         value: '',
       ));
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
-      overrideTitleIsNotEmpty() {
+      overriddenDescriptionIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'overrideTitle',
+        property: r'overriddenDescription',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenEndIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'overriddenEnd',
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenEndIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'overriddenEnd',
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenEndEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'overriddenEnd',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenEndGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'overriddenEnd',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenEndLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'overriddenEnd',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenEndBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'overriddenEnd',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenStartIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'overriddenStart',
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenStartIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'overriddenStart',
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenStartEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'overriddenStart',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenStartGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'overriddenStart',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenStartLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'overriddenStart',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenStartBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'overriddenStart',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'overriddenTitle',
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'overriddenTitle',
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'overriddenTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'overriddenTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'overriddenTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'overriddenTitle',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'overriddenTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'overriddenTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'overriddenTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'overriddenTitle',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'overriddenTitle',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      overriddenTitleIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'overriddenTitle',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      parentEventIdEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'parentEventId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      parentEventIdGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'parentEventId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      parentEventIdLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'parentEventId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterFilterCondition>
+      parentEventIdBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'parentEventId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -714,30 +904,6 @@ extension EventInstanceQueryLinks
 
 extension EventInstanceQuerySortBy
     on QueryBuilder<EventInstance, EventInstance, QSortBy> {
-  QueryBuilder<EventInstance, EventInstance, QAfterSortBy> sortByDate() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'date', Sort.asc);
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterSortBy> sortByDateDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'date', Sort.desc);
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterSortBy> sortByEventId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'eventId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterSortBy> sortByEventIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'eventId', Sort.desc);
-    });
-  }
-
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy> sortByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isDeleted', Sort.asc);
@@ -751,74 +917,107 @@ extension EventInstanceQuerySortBy
     });
   }
 
-  QueryBuilder<EventInstance, EventInstance, QAfterSortBy> sortByOverrideEnd() {
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      sortByIsOverridden() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideEnd', Sort.asc);
+      return query.addSortBy(r'isOverridden', Sort.asc);
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
-      sortByOverrideEndDesc() {
+      sortByIsOverriddenDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideEnd', Sort.desc);
+      return query.addSortBy(r'isOverridden', Sort.desc);
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
-      sortByOverrideStart() {
+      sortByOccurrenceDate() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideStart', Sort.asc);
+      return query.addSortBy(r'occurrenceDate', Sort.asc);
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
-      sortByOverrideStartDesc() {
+      sortByOccurrenceDateDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideStart', Sort.desc);
+      return query.addSortBy(r'occurrenceDate', Sort.desc);
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
-      sortByOverrideTitle() {
+      sortByOverriddenDescription() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideTitle', Sort.asc);
+      return query.addSortBy(r'overriddenDescription', Sort.asc);
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
-      sortByOverrideTitleDesc() {
+      sortByOverriddenDescriptionDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideTitle', Sort.desc);
+      return query.addSortBy(r'overriddenDescription', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      sortByOverriddenEnd() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenEnd', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      sortByOverriddenEndDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenEnd', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      sortByOverriddenStart() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenStart', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      sortByOverriddenStartDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenStart', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      sortByOverriddenTitle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenTitle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      sortByOverriddenTitleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenTitle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      sortByParentEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentEventId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      sortByParentEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentEventId', Sort.desc);
     });
   }
 }
 
 extension EventInstanceQuerySortThenBy
     on QueryBuilder<EventInstance, EventInstance, QSortThenBy> {
-  QueryBuilder<EventInstance, EventInstance, QAfterSortBy> thenByDate() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'date', Sort.asc);
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterSortBy> thenByDateDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'date', Sort.desc);
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterSortBy> thenByEventId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'eventId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QAfterSortBy> thenByEventIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'eventId', Sort.desc);
-    });
-  }
-
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -844,62 +1043,107 @@ extension EventInstanceQuerySortThenBy
     });
   }
 
-  QueryBuilder<EventInstance, EventInstance, QAfterSortBy> thenByOverrideEnd() {
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      thenByIsOverridden() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideEnd', Sort.asc);
+      return query.addSortBy(r'isOverridden', Sort.asc);
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
-      thenByOverrideEndDesc() {
+      thenByIsOverriddenDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideEnd', Sort.desc);
+      return query.addSortBy(r'isOverridden', Sort.desc);
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
-      thenByOverrideStart() {
+      thenByOccurrenceDate() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideStart', Sort.asc);
+      return query.addSortBy(r'occurrenceDate', Sort.asc);
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
-      thenByOverrideStartDesc() {
+      thenByOccurrenceDateDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideStart', Sort.desc);
+      return query.addSortBy(r'occurrenceDate', Sort.desc);
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
-      thenByOverrideTitle() {
+      thenByOverriddenDescription() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideTitle', Sort.asc);
+      return query.addSortBy(r'overriddenDescription', Sort.asc);
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
-      thenByOverrideTitleDesc() {
+      thenByOverriddenDescriptionDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'overrideTitle', Sort.desc);
+      return query.addSortBy(r'overriddenDescription', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      thenByOverriddenEnd() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenEnd', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      thenByOverriddenEndDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenEnd', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      thenByOverriddenStart() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenStart', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      thenByOverriddenStartDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenStart', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      thenByOverriddenTitle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenTitle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      thenByOverriddenTitleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'overriddenTitle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      thenByParentEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentEventId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QAfterSortBy>
+      thenByParentEventIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentEventId', Sort.desc);
     });
   }
 }
 
 extension EventInstanceQueryWhereDistinct
     on QueryBuilder<EventInstance, EventInstance, QDistinct> {
-  QueryBuilder<EventInstance, EventInstance, QDistinct> distinctByDate() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'date');
-    });
-  }
-
-  QueryBuilder<EventInstance, EventInstance, QDistinct> distinctByEventId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'eventId');
-    });
-  }
-
   QueryBuilder<EventInstance, EventInstance, QDistinct> distinctByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isDeleted');
@@ -907,24 +1151,53 @@ extension EventInstanceQueryWhereDistinct
   }
 
   QueryBuilder<EventInstance, EventInstance, QDistinct>
-      distinctByOverrideEnd() {
+      distinctByIsOverridden() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'overrideEnd');
+      return query.addDistinctBy(r'isOverridden');
     });
   }
 
   QueryBuilder<EventInstance, EventInstance, QDistinct>
-      distinctByOverrideStart() {
+      distinctByOccurrenceDate() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'overrideStart');
+      return query.addDistinctBy(r'occurrenceDate');
     });
   }
 
-  QueryBuilder<EventInstance, EventInstance, QDistinct> distinctByOverrideTitle(
-      {bool caseSensitive = true}) {
+  QueryBuilder<EventInstance, EventInstance, QDistinct>
+      distinctByOverriddenDescription({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'overrideTitle',
+      return query.addDistinctBy(r'overriddenDescription',
           caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QDistinct>
+      distinctByOverriddenEnd() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'overriddenEnd');
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QDistinct>
+      distinctByOverriddenStart() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'overriddenStart');
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QDistinct>
+      distinctByOverriddenTitle({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'overriddenTitle',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<EventInstance, EventInstance, QDistinct>
+      distinctByParentEventId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'parentEventId');
     });
   }
 }
@@ -937,42 +1210,56 @@ extension EventInstanceQueryProperty
     });
   }
 
-  QueryBuilder<EventInstance, DateTime, QQueryOperations> dateProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'date');
-    });
-  }
-
-  QueryBuilder<EventInstance, int, QQueryOperations> eventIdProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'eventId');
-    });
-  }
-
   QueryBuilder<EventInstance, bool, QQueryOperations> isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isDeleted');
     });
   }
 
-  QueryBuilder<EventInstance, DateTime?, QQueryOperations>
-      overrideEndProperty() {
+  QueryBuilder<EventInstance, bool, QQueryOperations> isOverriddenProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'overrideEnd');
+      return query.addPropertyName(r'isOverridden');
     });
   }
 
-  QueryBuilder<EventInstance, DateTime?, QQueryOperations>
-      overrideStartProperty() {
+  QueryBuilder<EventInstance, DateTime, QQueryOperations>
+      occurrenceDateProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'overrideStart');
+      return query.addPropertyName(r'occurrenceDate');
     });
   }
 
   QueryBuilder<EventInstance, String?, QQueryOperations>
-      overrideTitleProperty() {
+      overriddenDescriptionProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'overrideTitle');
+      return query.addPropertyName(r'overriddenDescription');
+    });
+  }
+
+  QueryBuilder<EventInstance, DateTime?, QQueryOperations>
+      overriddenEndProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'overriddenEnd');
+    });
+  }
+
+  QueryBuilder<EventInstance, DateTime?, QQueryOperations>
+      overriddenStartProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'overriddenStart');
+    });
+  }
+
+  QueryBuilder<EventInstance, String?, QQueryOperations>
+      overriddenTitleProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'overriddenTitle');
+    });
+  }
+
+  QueryBuilder<EventInstance, int, QQueryOperations> parentEventIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'parentEventId');
     });
   }
 }

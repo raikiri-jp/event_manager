@@ -20,32 +20,32 @@ const EventSchema = CollectionSchema(
     r'businessDayRule': PropertySchema(
       id: 0,
       name: r'businessDayRule',
-      type: IsarType.byte,
+      type: IsarType.string,
       enumMap: _EventbusinessDayRuleEnumValueMap,
     ),
-    r'description': PropertySchema(
+    r'createdAt': PropertySchema(
       id: 1,
+      name: r'createdAt',
+      type: IsarType.dateTime,
+    ),
+    r'description': PropertySchema(
+      id: 2,
       name: r'description',
       type: IsarType.string,
     ),
     r'end': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'end',
       type: IsarType.dateTime,
     ),
-    r'isBusinessDayAdjusted': PropertySchema(
-      id: 3,
-      name: r'isBusinessDayAdjusted',
+    r'isRecurring': PropertySchema(
+      id: 4,
+      name: r'isRecurring',
       type: IsarType.bool,
     ),
-    r'recurrenceCount': PropertySchema(
-      id: 4,
-      name: r'recurrenceCount',
-      type: IsarType.long,
-    ),
-    r'recurrenceEndDate': PropertySchema(
+    r'recurrenceUntil': PropertySchema(
       id: 5,
-      name: r'recurrenceEndDate',
+      name: r'recurrenceUntil',
       type: IsarType.dateTime,
     ),
     r'rrule': PropertySchema(
@@ -62,6 +62,11 @@ const EventSchema = CollectionSchema(
       id: 8,
       name: r'title',
       type: IsarType.string,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 9,
+      name: r'updatedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _eventEstimateSize,
@@ -84,6 +89,7 @@ int _eventEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.businessDayRule.name.length * 3;
   {
     final value = object.description;
     if (value != null) {
@@ -106,15 +112,16 @@ void _eventSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeByte(offsets[0], object.businessDayRule.index);
-  writer.writeString(offsets[1], object.description);
-  writer.writeDateTime(offsets[2], object.end);
-  writer.writeBool(offsets[3], object.isBusinessDayAdjusted);
-  writer.writeLong(offsets[4], object.recurrenceCount);
-  writer.writeDateTime(offsets[5], object.recurrenceEndDate);
+  writer.writeString(offsets[0], object.businessDayRule.name);
+  writer.writeDateTime(offsets[1], object.createdAt);
+  writer.writeString(offsets[2], object.description);
+  writer.writeDateTime(offsets[3], object.end);
+  writer.writeBool(offsets[4], object.isRecurring);
+  writer.writeDateTime(offsets[5], object.recurrenceUntil);
   writer.writeString(offsets[6], object.rrule);
   writer.writeDateTime(offsets[7], object.start);
   writer.writeString(offsets[8], object.title);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 Event _eventDeserialize(
@@ -125,17 +132,18 @@ Event _eventDeserialize(
 ) {
   final object = Event();
   object.businessDayRule =
-      _EventbusinessDayRuleValueEnumMap[reader.readByteOrNull(offsets[0])] ??
+      _EventbusinessDayRuleValueEnumMap[reader.readStringOrNull(offsets[0])] ??
           BusinessDayRule.none;
-  object.description = reader.readStringOrNull(offsets[1]);
-  object.end = reader.readDateTime(offsets[2]);
+  object.createdAt = reader.readDateTime(offsets[1]);
+  object.description = reader.readStringOrNull(offsets[2]);
+  object.end = reader.readDateTime(offsets[3]);
   object.id = id;
-  object.isBusinessDayAdjusted = reader.readBool(offsets[3]);
-  object.recurrenceCount = reader.readLongOrNull(offsets[4]);
-  object.recurrenceEndDate = reader.readDateTimeOrNull(offsets[5]);
+  object.isRecurring = reader.readBool(offsets[4]);
+  object.recurrenceUntil = reader.readDateTimeOrNull(offsets[5]);
   object.rrule = reader.readStringOrNull(offsets[6]);
   object.start = reader.readDateTime(offsets[7]);
   object.title = reader.readString(offsets[8]);
+  object.updatedAt = reader.readDateTime(offsets[9]);
   return object;
 }
 
@@ -148,16 +156,16 @@ P _eventDeserializeProp<P>(
   switch (propertyId) {
     case 0:
       return (_EventbusinessDayRuleValueEnumMap[
-              reader.readByteOrNull(offset)] ??
+              reader.readStringOrNull(offset)] ??
           BusinessDayRule.none) as P;
     case 1:
-      return (reader.readStringOrNull(offset)) as P;
-    case 2:
       return (reader.readDateTime(offset)) as P;
+    case 2:
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 4:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 6:
@@ -166,20 +174,22 @@ P _eventDeserializeProp<P>(
       return (reader.readDateTime(offset)) as P;
     case 8:
       return (reader.readString(offset)) as P;
+    case 9:
+      return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
 
 const _EventbusinessDayRuleEnumValueMap = {
-  'none': 0,
-  'moveToPrevious': 1,
-  'moveToNext': 2,
+  r'none': r'none',
+  r'forward': r'forward',
+  r'backward': r'backward',
 };
 const _EventbusinessDayRuleValueEnumMap = {
-  0: BusinessDayRule.none,
-  1: BusinessDayRule.moveToPrevious,
-  2: BusinessDayRule.moveToNext,
+  r'none': BusinessDayRule.none,
+  r'forward': BusinessDayRule.forward,
+  r'backward': BusinessDayRule.backward,
 };
 
 Id _eventGetId(Event object) {
@@ -271,11 +281,14 @@ extension EventQueryWhere on QueryBuilder<Event, Event, QWhereClause> {
 
 extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   QueryBuilder<Event, Event, QAfterFilterCondition> businessDayRuleEqualTo(
-      BusinessDayRule value) {
+    BusinessDayRule value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'businessDayRule',
         value: value,
+        caseSensitive: caseSensitive,
       ));
     });
   }
@@ -283,12 +296,14 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   QueryBuilder<Event, Event, QAfterFilterCondition> businessDayRuleGreaterThan(
     BusinessDayRule value, {
     bool include = false,
+    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
         property: r'businessDayRule',
         value: value,
+        caseSensitive: caseSensitive,
       ));
     });
   }
@@ -296,12 +311,14 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   QueryBuilder<Event, Event, QAfterFilterCondition> businessDayRuleLessThan(
     BusinessDayRule value, {
     bool include = false,
+    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
         property: r'businessDayRule',
         value: value,
+        caseSensitive: caseSensitive,
       ));
     });
   }
@@ -311,10 +328,134 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
     BusinessDayRule upper, {
     bool includeLower = true,
     bool includeUpper = true,
+    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'businessDayRule',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> businessDayRuleStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'businessDayRule',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> businessDayRuleEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'businessDayRule',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> businessDayRuleContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'businessDayRule',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> businessDayRuleMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'businessDayRule',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> businessDayRuleIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'businessDayRule',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition>
+      businessDayRuleIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'businessDayRule',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> createdAtEqualTo(
+      DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> createdAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> createdAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> createdAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'createdAt',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -573,140 +714,69 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
     });
   }
 
-  QueryBuilder<Event, Event, QAfterFilterCondition>
-      isBusinessDayAdjustedEqualTo(bool value) {
+  QueryBuilder<Event, Event, QAfterFilterCondition> isRecurringEqualTo(
+      bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'isBusinessDayAdjusted',
+        property: r'isRecurring',
         value: value,
       ));
     });
   }
 
-  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceCountIsNull() {
+  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceUntilIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'recurrenceCount',
+        property: r'recurrenceUntil',
       ));
     });
   }
 
-  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceCountIsNotNull() {
+  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceUntilIsNotNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'recurrenceCount',
+        property: r'recurrenceUntil',
       ));
     });
   }
 
-  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceCountEqualTo(
-      int? value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'recurrenceCount',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceCountGreaterThan(
-    int? value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'recurrenceCount',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceCountLessThan(
-    int? value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'recurrenceCount',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceCountBetween(
-    int? lower,
-    int? upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'recurrenceCount',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceEndDateIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'recurrenceEndDate',
-      ));
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterFilterCondition>
-      recurrenceEndDateIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'recurrenceEndDate',
-      ));
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceEndDateEqualTo(
+  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceUntilEqualTo(
       DateTime? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'recurrenceEndDate',
+        property: r'recurrenceUntil',
         value: value,
       ));
     });
   }
 
-  QueryBuilder<Event, Event, QAfterFilterCondition>
-      recurrenceEndDateGreaterThan(
+  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceUntilGreaterThan(
     DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'recurrenceEndDate',
+        property: r'recurrenceUntil',
         value: value,
       ));
     });
   }
 
-  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceEndDateLessThan(
+  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceUntilLessThan(
     DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'recurrenceEndDate',
+        property: r'recurrenceUntil',
         value: value,
       ));
     });
   }
 
-  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceEndDateBetween(
+  QueryBuilder<Event, Event, QAfterFilterCondition> recurrenceUntilBetween(
     DateTime? lower,
     DateTime? upper, {
     bool includeLower = true,
@@ -714,7 +784,7 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'recurrenceEndDate',
+        property: r'recurrenceUntil',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1047,6 +1117,59 @@ extension EventQueryFilter on QueryBuilder<Event, Event, QFilterCondition> {
       ));
     });
   }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> updatedAtEqualTo(
+      DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> updatedAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> updatedAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterFilterCondition> updatedAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'updatedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension EventQueryObject on QueryBuilder<Event, Event, QFilterCondition> {}
@@ -1063,6 +1186,18 @@ extension EventQuerySortBy on QueryBuilder<Event, Event, QSortBy> {
   QueryBuilder<Event, Event, QAfterSortBy> sortByBusinessDayRuleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'businessDayRule', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterSortBy> sortByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterSortBy> sortByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
     });
   }
 
@@ -1090,39 +1225,27 @@ extension EventQuerySortBy on QueryBuilder<Event, Event, QSortBy> {
     });
   }
 
-  QueryBuilder<Event, Event, QAfterSortBy> sortByIsBusinessDayAdjusted() {
+  QueryBuilder<Event, Event, QAfterSortBy> sortByIsRecurring() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isBusinessDayAdjusted', Sort.asc);
+      return query.addSortBy(r'isRecurring', Sort.asc);
     });
   }
 
-  QueryBuilder<Event, Event, QAfterSortBy> sortByIsBusinessDayAdjustedDesc() {
+  QueryBuilder<Event, Event, QAfterSortBy> sortByIsRecurringDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isBusinessDayAdjusted', Sort.desc);
+      return query.addSortBy(r'isRecurring', Sort.desc);
     });
   }
 
-  QueryBuilder<Event, Event, QAfterSortBy> sortByRecurrenceCount() {
+  QueryBuilder<Event, Event, QAfterSortBy> sortByRecurrenceUntil() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'recurrenceCount', Sort.asc);
+      return query.addSortBy(r'recurrenceUntil', Sort.asc);
     });
   }
 
-  QueryBuilder<Event, Event, QAfterSortBy> sortByRecurrenceCountDesc() {
+  QueryBuilder<Event, Event, QAfterSortBy> sortByRecurrenceUntilDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'recurrenceCount', Sort.desc);
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterSortBy> sortByRecurrenceEndDate() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'recurrenceEndDate', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterSortBy> sortByRecurrenceEndDateDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'recurrenceEndDate', Sort.desc);
+      return query.addSortBy(r'recurrenceUntil', Sort.desc);
     });
   }
 
@@ -1161,6 +1284,18 @@ extension EventQuerySortBy on QueryBuilder<Event, Event, QSortBy> {
       return query.addSortBy(r'title', Sort.desc);
     });
   }
+
+  QueryBuilder<Event, Event, QAfterSortBy> sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterSortBy> sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
+    });
+  }
 }
 
 extension EventQuerySortThenBy on QueryBuilder<Event, Event, QSortThenBy> {
@@ -1173,6 +1308,18 @@ extension EventQuerySortThenBy on QueryBuilder<Event, Event, QSortThenBy> {
   QueryBuilder<Event, Event, QAfterSortBy> thenByBusinessDayRuleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'businessDayRule', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterSortBy> thenByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterSortBy> thenByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
     });
   }
 
@@ -1212,39 +1359,27 @@ extension EventQuerySortThenBy on QueryBuilder<Event, Event, QSortThenBy> {
     });
   }
 
-  QueryBuilder<Event, Event, QAfterSortBy> thenByIsBusinessDayAdjusted() {
+  QueryBuilder<Event, Event, QAfterSortBy> thenByIsRecurring() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isBusinessDayAdjusted', Sort.asc);
+      return query.addSortBy(r'isRecurring', Sort.asc);
     });
   }
 
-  QueryBuilder<Event, Event, QAfterSortBy> thenByIsBusinessDayAdjustedDesc() {
+  QueryBuilder<Event, Event, QAfterSortBy> thenByIsRecurringDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isBusinessDayAdjusted', Sort.desc);
+      return query.addSortBy(r'isRecurring', Sort.desc);
     });
   }
 
-  QueryBuilder<Event, Event, QAfterSortBy> thenByRecurrenceCount() {
+  QueryBuilder<Event, Event, QAfterSortBy> thenByRecurrenceUntil() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'recurrenceCount', Sort.asc);
+      return query.addSortBy(r'recurrenceUntil', Sort.asc);
     });
   }
 
-  QueryBuilder<Event, Event, QAfterSortBy> thenByRecurrenceCountDesc() {
+  QueryBuilder<Event, Event, QAfterSortBy> thenByRecurrenceUntilDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'recurrenceCount', Sort.desc);
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterSortBy> thenByRecurrenceEndDate() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'recurrenceEndDate', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Event, Event, QAfterSortBy> thenByRecurrenceEndDateDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'recurrenceEndDate', Sort.desc);
+      return query.addSortBy(r'recurrenceUntil', Sort.desc);
     });
   }
 
@@ -1283,12 +1418,32 @@ extension EventQuerySortThenBy on QueryBuilder<Event, Event, QSortThenBy> {
       return query.addSortBy(r'title', Sort.desc);
     });
   }
+
+  QueryBuilder<Event, Event, QAfterSortBy> thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Event, Event, QAfterSortBy> thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
+    });
+  }
 }
 
 extension EventQueryWhereDistinct on QueryBuilder<Event, Event, QDistinct> {
-  QueryBuilder<Event, Event, QDistinct> distinctByBusinessDayRule() {
+  QueryBuilder<Event, Event, QDistinct> distinctByBusinessDayRule(
+      {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'businessDayRule');
+      return query.addDistinctBy(r'businessDayRule',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Event, Event, QDistinct> distinctByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'createdAt');
     });
   }
 
@@ -1305,21 +1460,15 @@ extension EventQueryWhereDistinct on QueryBuilder<Event, Event, QDistinct> {
     });
   }
 
-  QueryBuilder<Event, Event, QDistinct> distinctByIsBusinessDayAdjusted() {
+  QueryBuilder<Event, Event, QDistinct> distinctByIsRecurring() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'isBusinessDayAdjusted');
+      return query.addDistinctBy(r'isRecurring');
     });
   }
 
-  QueryBuilder<Event, Event, QDistinct> distinctByRecurrenceCount() {
+  QueryBuilder<Event, Event, QDistinct> distinctByRecurrenceUntil() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'recurrenceCount');
-    });
-  }
-
-  QueryBuilder<Event, Event, QDistinct> distinctByRecurrenceEndDate() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'recurrenceEndDate');
+      return query.addDistinctBy(r'recurrenceUntil');
     });
   }
 
@@ -1342,6 +1491,12 @@ extension EventQueryWhereDistinct on QueryBuilder<Event, Event, QDistinct> {
       return query.addDistinctBy(r'title', caseSensitive: caseSensitive);
     });
   }
+
+  QueryBuilder<Event, Event, QDistinct> distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'updatedAt');
+    });
+  }
 }
 
 extension EventQueryProperty on QueryBuilder<Event, Event, QQueryProperty> {
@@ -1358,6 +1513,12 @@ extension EventQueryProperty on QueryBuilder<Event, Event, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Event, DateTime, QQueryOperations> createdAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'createdAt');
+    });
+  }
+
   QueryBuilder<Event, String?, QQueryOperations> descriptionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'description');
@@ -1370,21 +1531,15 @@ extension EventQueryProperty on QueryBuilder<Event, Event, QQueryProperty> {
     });
   }
 
-  QueryBuilder<Event, bool, QQueryOperations> isBusinessDayAdjustedProperty() {
+  QueryBuilder<Event, bool, QQueryOperations> isRecurringProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'isBusinessDayAdjusted');
+      return query.addPropertyName(r'isRecurring');
     });
   }
 
-  QueryBuilder<Event, int?, QQueryOperations> recurrenceCountProperty() {
+  QueryBuilder<Event, DateTime?, QQueryOperations> recurrenceUntilProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'recurrenceCount');
-    });
-  }
-
-  QueryBuilder<Event, DateTime?, QQueryOperations> recurrenceEndDateProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'recurrenceEndDate');
+      return query.addPropertyName(r'recurrenceUntil');
     });
   }
 
@@ -1403,6 +1558,12 @@ extension EventQueryProperty on QueryBuilder<Event, Event, QQueryProperty> {
   QueryBuilder<Event, String, QQueryOperations> titleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'title');
+    });
+  }
+
+  QueryBuilder<Event, DateTime, QQueryOperations> updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'updatedAt');
     });
   }
 }

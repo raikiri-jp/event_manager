@@ -13,12 +13,16 @@ class Event {
   late DateTime start;
   late DateTime end;
 
-  String? rrule;
-  DateTime? recurrenceEndDate;
-  int? recurrenceCount;
+  bool isRecurring = false;
+  String? rrule; // RRULE形式の文字列（例："FREQ=WEEKLY;BYDAY=MO,WE,FR"）
 
-  bool isBusinessDayAdjusted = false;
+  @Enumerated(EnumType.name)
+  BusinessDayRule businessDayRule = BusinessDayRule.none;
 
-  @enumerated
-  late BusinessDayRule businessDayRule;
+  // 例えば繰り返しイベントに対するインスタンスの生成範囲を制限する場合
+  DateTime? recurrenceUntil;
+
+  // 作成日時
+  late DateTime createdAt;
+  late DateTime updatedAt;
 }
