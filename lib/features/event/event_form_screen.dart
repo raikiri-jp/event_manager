@@ -1,10 +1,7 @@
-import 'package:event_manager/providers/calendar_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/event.dart';
-import '../../models/enums.dart';
-import '../../services/event_service.dart';
+import '../../services/isar_service.dart';
 
 class EventFormScreen extends StatefulWidget {
   const EventFormScreen({super.key});
@@ -15,84 +12,46 @@ class EventFormScreen extends StatefulWidget {
 
 class _EventFormScreenState extends State<EventFormScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _isar = IsarService();
+
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  DateTime _startDate = DateTime.now();
+  DateTime _endDate = DateTime.now().add(const Duration(hours: 1));
 
-  DateTime _start = DateTime.now();
-  DateTime _end = DateTime.now().add(const Duration(hours: 1));
-  bool _adjustBusinessDay = false;
-  BusinessDayRule _selectedRule = BusinessDayRule.none;
-
-  final _eventService = EventService();
-
-  Future<void> _save() async {
-    if (_formKey.currentState!.validate()) {
-      final event = Event()
-        ..title = _titleController.text
-        ..description = _descriptionController.text
-        ..start = _start
-        ..end = _end
-        ..rrule = null
-        ..isBusinessDayAdjusted = _adjustBusinessDay
-        ..businessDayRule = _selectedRule;
-
-      await _eventService.addEvent(event);
-
-      if (context.mounted) {
-        // カレンダーの再描画を促す
-        // ignore: use_build_context_synchronously
-        final container = ProviderScope.containerOf(context);
-        final current = container.read(focusedMonthProvider);
-        container.read(focusedMonthProvider.notifier).state = DateTime(
-          current.year,
-          current.month,
-          1,
-          0,
-          0,
-          0,
-          current.microsecond + 1,
-        );
-
-        // ignore: use_build_context_synchronously
-        Navigator.pop(context);
-      }
-    }
-  }
-
-  Future<void> _pickDateTime({required bool isStart}) async {
-    final initial = isStart ? _start : _end;
-    final pickedDate = await showDatePicker(
+  Future<void> _selectDateTime({
+    required DateTime initialDate,
+    required ValueChanged<DateTime> onConfirmed,
+  }) async {
+    final date = await showDatePicker(
       context: context,
-      initialDate: initial,
-      firstDate: DateTime(2000),
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
-    if (pickedDate == null) return;
+    if (date == null) return;
 
-    final pickedTime = await showTimePicker(
+    final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(initial),
+      initialTime: TimeOfDay.fromDateTime(initialDate),
     );
-    if (pickedTime == null) return;
+    if (time == null) return;
 
-    final dateTime = DateTime(
-      pickedDate.year,
-      pickedDate.month,
-      pickedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
-    );
+    onConfirmed(DateTime(date.year, date.month, date.day, time.hour, time.minute));
+  }
 
-    setState(() {
-      if (isStart) {
-        _start = dateTime;
-        if (_end.isBefore(_start)) {
-          _end = _start.add(const Duration(hours: 1));
-        }
-      } else {
-        _end = dateTime;
-      }
-    });
+  Future<void> _saveEvent() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final event = Event()
+      ..title = _titleController.text
+      ..description = _descriptionController.text
+      ..start = _startDate
+      ..end = _endDate
+      ..isRecurring = false;
+
+    await _isar.addEvent(event);
+    if (context.mounted) Navigator.pop(context, true);
   }
 
   @override
@@ -107,83 +66,43 @@ class _EventFormScreenState extends State<EventFormScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              // タイトル
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(labelText: 'タイトル'),
                 validator: (value) =>
-                    value == null || value.isEmpty ? 'タイトルは必須です' : null,
+                    value == null || value.isEmpty ? 'タイトルを入力してください' : null,
               ),
               const SizedBox(height: 12),
-              // 説明
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: '説明'),
-                maxLines: 3,
+                decoration: const InputDecoration(labelText: '説明（任意）'),
               ),
-              const SizedBox(height: 12),
-              // 開始時刻
+              const SizedBox(height: 20),
               ListTile(
-                title: const Text('開始'),
-                subtitle: Text(dateFormat.format(_start)),
+                title: Text('開始: ${dateFormat.format(_startDate)}'),
                 trailing: const Icon(Icons.calendar_today),
-                onTap: () => _pickDateTime(isStart: true),
-              ),
-              // 終了時刻
-              ListTile(
-                title: const Text('終了'),
-                subtitle: Text(dateFormat.format(_end)),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () => _pickDateTime(isStart: false),
-              ),
-              const Divider(),
-              // 営業日調整
-              SwitchListTile(
-                title: const Text('営業日調整を有効にする'),
-                value: _adjustBusinessDay,
-                onChanged: (value) {
-                  setState(() {
-                    _adjustBusinessDay = value;
-                  });
-                },
-              ),
-              if (_adjustBusinessDay)
-                DropdownButtonFormField<BusinessDayRule>(
-                  value: _selectedRule,
-                  decoration: const InputDecoration(labelText: '調整方法（営業日）'),
-                  items: BusinessDayRule.values
-                      .map(
-                        (rule) => DropdownMenuItem(
-                          value: rule,
-                          child: Text(_labelForRule(rule)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedRule = value;
-                      });
-                    }
-                  },
+                onTap: () => _selectDateTime(
+                  initialDate: _startDate,
+                  onConfirmed: (dt) => setState(() => _startDate = dt),
                 ),
+              ),
+              ListTile(
+                title: Text('終了: ${dateFormat.format(_endDate)}'),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () => _selectDateTime(
+                  initialDate: _endDate,
+                  onConfirmed: (dt) => setState(() => _endDate = dt),
+                ),
+              ),
               const SizedBox(height: 24),
-              ElevatedButton(onPressed: _save, child: const Text('保存')),
+              ElevatedButton(
+                onPressed: _saveEvent,
+                child: const Text('保存'),
+              ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  String _labelForRule(BusinessDayRule rule) {
-    switch (rule) {
-      case BusinessDayRule.none:
-        return '調整しない';
-      case BusinessDayRule.moveToPrevious:
-        return '直前の営業日に変更';
-      case BusinessDayRule.moveToNext:
-        return '直後の営業日に変更';
-    }
   }
 }
