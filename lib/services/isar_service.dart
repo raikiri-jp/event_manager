@@ -1,20 +1,36 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/event.dart';
-import '../models/event_instance.dart';
 
 class IsarService {
-  static final IsarService _instance = IsarService._internal();
-  factory IsarService() => _instance;
-  IsarService._internal();
+  late Future<Isar> db;
 
-  late Isar isar;
+  IsarService() {
+    db = _initIsar();
+  }
 
-  Future<void> init() async {
+  Future<Isar> _initIsar() async {
     final dir = await getApplicationDocumentsDirectory();
-    isar = await Isar.open([
-      EventSchema,
-      EventInstanceSchema,
-    ], directory: dir.path);
+    return await Isar.open(
+      [EventSchema],
+      directory: dir.path,
+    );
+  }
+
+  Future<void> addEvent(Event event) async {
+    final isar = await db;
+    event.createdAt = DateTime.now();
+    event.updatedAt = DateTime.now();
+    await isar.writeTxn(() => isar.events.put(event));
+  }
+
+  Future<List<Event>> getAllEvents() async {
+    final isar = await db;
+    return await isar.events.where().findAll();
+  }
+
+  Future<void> deleteEvent(int id) async {
+    final isar = await db;
+    await isar.writeTxn(() => isar.events.delete(id));
   }
 }
