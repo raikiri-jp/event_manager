@@ -1,38 +1,32 @@
+import 'package:event_manager/features/calendar/widgets/custom_calendar.dart';
 import 'package:flutter/material.dart';
-import 'models/event.dart';
-import 'services/isar_service.dart';
+import 'features/event/event_form_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  final isarService = IsarService();
-
-  // 仮のイベントを登録して取得
-  final newEvent = Event()
-    ..title = 'テストイベント'
-    ..description = 'テスト用の説明'
-    ..start = DateTime(2025, 6, 30, 10)
-    ..end = DateTime(2025, 6, 30, 11)
-    ..isRecurring = false;
-
-  await isarService.addEvent(newEvent);
-
-  final allEvents = await isarService.getAllEvents();
-  for (var e in allEvents) {
-    print('${e.id}: ${e.title} (${e.start}〜${e.end})');
-  }
-
-  runApp(const PlaceholderApp());
+  runApp(const MaterialApp(home: CalendarTestScreen()));
 }
 
-class PlaceholderApp extends StatelessWidget {
-  const PlaceholderApp({super.key});
+class CalendarTestScreen extends StatelessWidget {
+  const CalendarTestScreen({super.key});
+
+  void _openForm(BuildContext context, DateTime date) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EventFormScreen(
+          initialStart: DateTime(date.year, date.month, date.day, 9),
+          initialEnd: DateTime(date.year, date.month, date.day, 10),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(child: Text('Event Manager 動作テスト')),
-      ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('カレンダー表示')),
+      body: CustomCalendar(onDateTap: (date) => _openForm(context, date)),
     );
   }
 }

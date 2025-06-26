@@ -1,43 +1,32 @@
+import 'package:event_manager/features/event/recurrence_form.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../models/event.dart';
-import '../../services/isar_service.dart';
 
 class EventFormScreen extends StatefulWidget {
-  const EventFormScreen({super.key});
+  final DateTime? initialStart;
+  final DateTime? initialEnd;
+
+  const EventFormScreen({super.key, this.initialStart, this.initialEnd});
 
   @override
   State<EventFormScreen> createState() => _EventFormScreenState();
 }
 
 class _EventFormScreenState extends State<EventFormScreen> {
+  String? _rrule;
   final _formKey = GlobalKey<FormState>();
-  final _isar = IsarService();
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(const Duration(hours: 1));
+  late DateTime _startDate;
+  late DateTime _endDate;
 
-  Future<void> _selectDateTime({
-    required DateTime initialDate,
-    required ValueChanged<DateTime> onConfirmed,
-  }) async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
-    if (date == null) return;
-
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(initialDate),
-    );
-    if (time == null) return;
-
-    onConfirmed(DateTime(date.year, date.month, date.day, time.hour, time.minute));
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _startDate = widget.initialStart ?? now;
+    _endDate = widget.initialEnd ?? now.add(const Duration(hours: 1));
   }
 
   Future<void> _saveEvent() async {
@@ -48,16 +37,17 @@ class _EventFormScreenState extends State<EventFormScreen> {
       ..description = _descriptionController.text
       ..start = _startDate
       ..end = _endDate
-      ..isRecurring = false;
+      ..isRecurring = _rrule != null
+      ..rrule = _rrule;
 
-    await _isar.addEvent(event);
-    if (context.mounted) Navigator.pop(context, true);
+    if (!mounted) {
+      return;
+    }
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('yyyy/MM/dd HH:mm');
-
     return Scaffold(
       appBar: AppBar(title: const Text('イベント作成')),
       body: Padding(
@@ -66,39 +56,25 @@ class _EventFormScreenState extends State<EventFormScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'タイトル'),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'タイトルを入力してください' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: '説明（任意）'),
-              ),
-              const SizedBox(height: 20),
-              ListTile(
-                title: Text('開始: ${dateFormat.format(_startDate)}'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () => _selectDateTime(
-                  initialDate: _startDate,
-                  onConfirmed: (dt) => setState(() => _startDate = dt),
-                ),
-              ),
-              ListTile(
-                title: Text('終了: ${dateFormat.format(_endDate)}'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () => _selectDateTime(
-                  initialDate: _endDate,
-                  onConfirmed: (dt) => setState(() => _endDate = dt),
-                ),
-              ),
+              // ...タイトル・説明・日付など...
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _saveEvent,
-                child: const Text('保存'),
+              const Text(
+                '繰り返し設定',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
+              RecurrenceForm(
+                onChanged: (rrule) => setState(() => _rrule = rrule),
+              ),
+              if (_rrule != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '生成されたRRULE: $_rrule',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ),
+              const SizedBox(height: 24),
+              ElevatedButton(onPressed: _saveEvent, child: const Text('保存')),
             ],
           ),
         ),

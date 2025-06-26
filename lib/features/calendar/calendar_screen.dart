@@ -8,14 +8,12 @@ class CalendarScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final focusedMonth = ref.watch(focusedMonthProvider);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Event Manager')),
       body: Column(
         children: [
           _MonthHeader(),
-          Expanded(child: CustomCalendar(focusedMonth: focusedMonth)),
+          Expanded(child: CustomCalendar()),
         ],
       ),
       floatingActionButton: FloatingActionButton(
