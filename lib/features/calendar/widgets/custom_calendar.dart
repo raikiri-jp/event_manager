@@ -94,17 +94,10 @@ class _CustomCalendarState extends State<CustomCalendar> {
               final date = _getDateForIndex(index);
               final key = DateFormat('yyyy-MM-dd').format(date);
               final events = _eventsByDay[key] ?? [];
-              CalendarCell(
+              return CalendarCell(
                 date: date,
                 events: events,
-                onDateTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EventListScreen(selectedDate: date),
-                    ),
-                  );
-                },
+                onDateTap: () => widget.onDateTap(date),
               );
             },
           ),

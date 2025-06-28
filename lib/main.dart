@@ -1,43 +1,22 @@
-import 'package:event_manager/features/calendar/event_list_screen.dart';
-import 'package:event_manager/features/calendar/widgets/custom_calendar.dart';
 import 'package:flutter/material.dart';
-import 'features/event/event_form_screen.dart';
+import 'features/calendar/calendar_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MaterialApp(home: CalendarTestScreen()));
+void main() {
+  runApp(const EventManagerApp());
 }
 
-class CalendarTestScreen extends StatelessWidget {
-  const CalendarTestScreen({super.key});
-
-  void _openForm(BuildContext context, DateTime date) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EventFormScreen(
-          initialStart: DateTime(date.year, date.month, date.day, 9),
-          initialEnd: DateTime(date.year, date.month, date.day, 10),
-        ),
-      ),
-    );
-  }
+class EventManagerApp extends StatelessWidget {
+  const EventManagerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('カレンダー表示')),
-      body: CustomCalendar(
-        focusedMonth: _focusedMonth,
-        onDateTap: (selectedDate) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => EventListScreen(selectedDate: selectedDate),
-            ),
-          );
-        },
-      )
+    return MaterialApp(
+      title: 'Event Manager',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.indigo,
+      ),
+      home: const CalendarScreen(),
     );
   }
 }
