@@ -1,3 +1,4 @@
+import 'package:event_manager/screens/event_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -31,11 +32,22 @@ class EventListScreen extends StatelessWidget {
             itemCount: events.length,
             itemBuilder: (context, index) {
               final event = events[index];
+              final dateFormat = DateFormat('HH:mm');
+              final start = dateFormat.format(event.start);
+              final end = dateFormat.format(event.end);
               return ListTile(
                 title: Text(event.title),
-                subtitle: Text(DateFormat('HH:mm').format(event.start)),
+                subtitle: Text('$start - $end'),
                 onTap: () {
-                  // TODO: 編集画面へ遷移（後ほど実装）
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EventDetailScreen(
+                        instanceId: event.id,
+                        occurrenceDate: event.start,
+                      ),
+                    ),
+                  );
                 },
               );
             },
