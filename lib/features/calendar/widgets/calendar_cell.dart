@@ -4,17 +4,21 @@ import '../../../models/event.dart';
 class CalendarCell extends StatelessWidget {
   final DateTime date;
   final List<Event> events;
+  final VoidCallback onDateTap;
 
-  const CalendarCell({super.key, required this.date, required this.events});
+  const CalendarCell({
+    super.key,
+    required this.date,
+    required this.events,
+    required this.onDateTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isToday = _isSameDay(date, DateTime.now());
 
     return GestureDetector(
-      onTap: () {
-        // TODO: 日付タップ時の処理（イベント一覧表示など）
-      },
+      onTap: onDateTap,
       child: Container(
         margin: const EdgeInsets.all(1),
         decoration: BoxDecoration(

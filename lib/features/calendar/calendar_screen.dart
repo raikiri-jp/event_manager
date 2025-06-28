@@ -1,3 +1,4 @@
+import 'package:event_manager/features/calendar/event_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'widgets/custom_calendar.dart';
@@ -13,7 +14,19 @@ class CalendarScreen extends ConsumerWidget {
       body: Column(
         children: [
           _MonthHeader(),
-          Expanded(child: CustomCalendar()),
+          Expanded(
+            child: CustomCalendar(
+              focusedMonth: _focusedMonth,
+              onDateTap: (selectedDate) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EventListScreen(selectedDate: selectedDate),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(

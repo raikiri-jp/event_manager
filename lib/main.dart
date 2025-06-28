@@ -1,3 +1,4 @@
+import 'package:event_manager/features/calendar/event_list_screen.dart';
 import 'package:event_manager/features/calendar/widgets/custom_calendar.dart';
 import 'package:flutter/material.dart';
 import 'features/event/event_form_screen.dart';
@@ -26,7 +27,17 @@ class CalendarTestScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('カレンダー表示')),
-      body: CustomCalendar(onDateTap: (date) => _openForm(context, date)),
+      body: CustomCalendar(
+        focusedMonth: _focusedMonth,
+        onDateTap: (selectedDate) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => EventListScreen(selectedDate: selectedDate),
+            ),
+          );
+        },
+      )
     );
   }
 }

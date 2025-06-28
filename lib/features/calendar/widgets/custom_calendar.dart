@@ -1,124 +1,107 @@
+import 'package:event_manager/features/calendar/event_list_screen.dart';
+import 'package:event_manager/features/calendar/widgets/calendar_cell.dart';
 import 'package:event_manager/models/event.dart';
-import 'package:event_manager/services/isar_service.dart';
+import 'package:event_manager/services/event_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class CustomCalendar extends StatefulWidget {
-  final void Function(DateTime date)? onDateTap;
+  final DateTime focusedMonth;
+  final Function(DateTime) onDateTap;
 
-  const CustomCalendar({super.key, this.onDateTap});
+  const CustomCalendar({
+    super.key,
+    required this.focusedMonth,
+    required this.onDateTap,
+  });
 
   @override
   State<CustomCalendar> createState() => _CustomCalendarState();
 }
 
 class _CustomCalendarState extends State<CustomCalendar> {
-  DateTime _focusedMonth = DateTime.now();
-  final _isar = IsarService();
+  final _eventService = EventService();
+  Map<String, List<Event>> _eventsByDay = {};
 
-  Future<List<Event>> _getEventsForDay(DateTime date) async {
-    final all = await _isar.getAllEvents();
-    return all.where((e) {
-      return !e.isRecurring &&
-          e.start.year == date.year &&
-          e.start.month == date.month &&
-          e.start.day == date.day;
-    }).toList();
+  @override
+  void initState() {
+    super.initState();
+    _loadEvents();
   }
 
-  List<DateTime> _getDaysInMonthGrid(DateTime month) {
-    final firstDay = DateTime(month.year, month.month, 1);
-    final firstWeekday = firstDay.weekday % 7; // 日曜始まり (0〜6)
-    final daysBefore = firstDay.subtract(Duration(days: firstWeekday));
-
-    return List.generate(42, (i) => daysBefore.add(Duration(days: i)));
+  @override
+  void didUpdateWidget(CustomCalendar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!isSameMonth(widget.focusedMonth, oldWidget.focusedMonth)) {
+      _loadEvents();
+    }
   }
 
-  void _changeMonth(int offset) {
+  bool isSameMonth(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month;
+  }
+
+  Future<void> _loadEvents() async {
+    final start = DateTime(
+      widget.focusedMonth.year,
+      widget.focusedMonth.month,
+      1,
+    );
+    final end = DateTime(
+      widget.focusedMonth.year,
+      widget.focusedMonth.month + 1,
+      0,
+    );
+    final days = List.generate(end.day, (i) => start.add(Duration(days: i)));
+
+    final Map<String, List<Event>> result = {};
+
+    for (final day in days) {
+      final events = await _eventService.getEventsForDate(day);
+      result[DateFormat('yyyy-MM-dd').format(day)] = events;
+    }
+
     setState(() {
-      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + offset);
+      _eventsByDay = result;
     });
+  }
+
+  DateTime _getDateForIndex(int index) {
+    final firstDay = DateTime(
+      widget.focusedMonth.year,
+      widget.focusedMonth.month,
+      1,
+    );
+    final weekdayOffset = firstDay.weekday % 7; // 0: Sunday
+    return firstDay
+        .subtract(Duration(days: weekdayOffset))
+        .add(Duration(days: index));
   }
 
   @override
   Widget build(BuildContext context) {
-    final days = _getDaysInMonthGrid(_focusedMonth);
-    final monthFormat = DateFormat('yyyy年MM月');
-
     return Column(
       children: [
-        // 月ナビゲーション
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(onPressed: () => _changeMonth(-1), icon: const Icon(Icons.chevron_left)),
-            Text(monthFormat.format(_focusedMonth), style: const TextStyle(fontSize: 18)),
-            IconButton(onPressed: () => _changeMonth(1), icon: const Icon(Icons.chevron_right)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // 曜日ラベル
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: ['日', '月', '火', '水', '木', '金', '土']
-              .map((d) => Expanded(
-                    child: Center(
-                        child: Text(d, style: const TextStyle(fontWeight: FontWeight.bold))),
-                  ))
-              .toList(),
-        ),
-        const SizedBox(height: 4),
-        // カレンダーグリッド
+        // ヘッダーなど省略
         Expanded(
           child: GridView.builder(
-            itemCount: days.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              childAspectRatio: 1.1,
+              childAspectRatio: 1.0,
             ),
+            itemCount: 42,
             itemBuilder: (context, index) {
-              final date = days[index];
-              final isCurrentMonth = date.month == _focusedMonth.month;
-              final isToday = date == DateTime.now().copyWith(hour: 0, minute: 0, second: 0);
-
-              return FutureBuilder<List<Event>>(
-                future: _getEventsForDay(date),
-                builder: (context, snapshot) {
-                  final events = snapshot.data ?? [];
-
-                  return GestureDetector(
-                    onTap: () => widget.onDateTap?.call(date),
-                    child: Container(
-                      margin: const EdgeInsets.all(2),
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: isToday
-                            ? Colors.lightBlueAccent.withAlpha((0.3 * 255).toInt())
-                            : Colors.transparent,
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${date.day}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: isCurrentMonth ? Colors.black : Colors.grey,
-                            ),
-                          ),
-                          ...events.take(2).map((e) => Text(
-                                e.title,
-                                style: const TextStyle(fontSize: 9),
-                                overflow: TextOverflow.ellipsis,
-                              )),
-                          if (events.length > 2)
-                            Text('+${events.length - 2}件',
-                                style:
-                                    const TextStyle(fontSize: 9, color: Colors.grey)),
-                        ],
-                      ),
+              final date = _getDateForIndex(index);
+              final key = DateFormat('yyyy-MM-dd').format(date);
+              final events = _eventsByDay[key] ?? [];
+              CalendarCell(
+                date: date,
+                events: events,
+                onDateTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EventListScreen(selectedDate: date),
                     ),
                   );
                 },

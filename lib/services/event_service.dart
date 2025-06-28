@@ -1,30 +1,41 @@
-import 'package:isar/isar.dart';
-import '../models/event.dart';
-import '../services/isar_service.dart';
+import 'package:event_manager/models/event.dart';
+import 'package:event_manager/services/isar_service.dart';
+import 'package:rrule/rrule.dart';
 
 class EventService {
-  // final Isar _isar = IsarService().isar;
+  final _isar = IsarService();
 
-  // Future<void> addEvent(Event event) async {
-  //   await _isar.writeTxn(() async {
-  //     await _isar.events.put(event);
-  //   });
-  // }
+  /// 指定日のイベントを取得（単発 + 繰り返し）
+  Future<List<Event>> getEventsForDate(DateTime date) async {
+    final allEvents = await _isar.getAllEvents();
+    final List<Event> results = [];
 
-  // Future<void> deleteEvent(Id id) async {
-  //   await _isar.writeTxn(() async {
-  //     await _isar.events.delete(id);
-  //   });
-  // }
+    for (final event in allEvents) {
+      if (!event.isRecurring) {
+        if (_isSameDay(event.start, date)) {
+          results.add(event);
+        }
+      } else if (event.rrule != null) {
+        try {
+          final rule = RecurrenceRule.fromString(event.rrule!);
+          final occurrences = rule
+              .getInstances(start: event.start)
+              .where((instance) => _isSameDay(instance.toLocal(), date));
 
-  // Future<List<Event>> getEventsBetween(DateTime start, DateTime end) async {
-  //   return await _isar.events
-  //       .filter()
-  //       .startBetween(start, end, includeLower: true, includeUpper: true)
-  //       .findAll();
-  // }
+          if (occurrences.isNotEmpty) {
+            results.add(event);
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+    }
 
-  // Future<Event?> getEventById(Id id) async {
-  //   return await _isar.events.get(id);
-  // }
+    return results;
+  }
+
+  /// 日付比較（年・月・日が同じ）
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
 }
