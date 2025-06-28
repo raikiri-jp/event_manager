@@ -1,4 +1,3 @@
-import 'package:event_manager/features/calendar/event_list_screen.dart';
 import 'package:event_manager/features/calendar/widgets/calendar_cell.dart';
 import 'package:event_manager/models/event.dart';
 import 'package:event_manager/services/event_service.dart';
